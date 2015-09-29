@@ -15,6 +15,8 @@ public class SfBChatBubblesService extends Service{
     private final IBinder mBinder = new SfBChatBubblesServiceBinder();
     // Declare Service Members/Components here
 
+    private LyncSignIn mLyncSignIn;
+
     private boolean serviceStarted = false;
 
     @Override
@@ -35,6 +37,8 @@ public class SfBChatBubblesService extends Service{
         if (this.isServiceStarted()){
             return;
         }
+
+        this.mLyncSignIn = new LyncSignIn(this);
 
         // Init Service Members/Components here
         this.serviceStarted = true;
