@@ -1,18 +1,17 @@
 package nikhanch.com.sfbandroidchatbubbles.ApplicationService;
 
-import android.content.Context;
 import android.widget.Toast;
 
-import com.squareup.okhttp.Headers;
 import com.squareup.okhttp.Interceptor;
 import com.squareup.okhttp.Request;
 import com.squareup.okhttp.ResponseBody;
+import com.squareup.otto.Produce;
 
 import java.io.IOException;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
+import java.net.URL;
 
+import nikhanch.com.sfbandroidchatbubbles.Application;
+import nikhanch.com.sfbandroidchatbubbles.ApplicationService.WebTicket.GetTokenCallback;
 import okio.Buffer;
 import retrofit.Call;
 import retrofit.Callback;
@@ -29,16 +28,18 @@ public class LyncSignIn {
 
     public static final String LYNC_SERVER_API_URL = "https://LyncDiscover.microsoft.com/";
 
-    public final Context mContext;
+    public final SfBChatBubblesService mApplicationService;
     private String mUserUrl;
     private String mToken;
-    private String mApplicationsResource;
+    private String mApplicationsResourceUrl;
+    private ApplicationsResource mApplicationResource;
     private Retrofit mRetrofit;
     private LyncService mLyncService;
-    public LyncSignIn(Context context)
+    public LyncSignIn(SfBChatBubblesService context)
     {
-        mContext = context;
+        mApplicationService = context;
         mRetrofit = new Retrofit.Builder().addConverterFactory(GsonConverterFactory.create()).baseUrl(LYNC_SERVER_API_URL).build();
+        //region Interceptor to read and write web traffic sent
         /*mRetrofit.client().interceptors().add(new Interceptor(){
             @Override public com.squareup.okhttp.Response intercept(Interceptor.Chain chain) throws IOException {
                 Request request = chain.request();
@@ -57,12 +58,24 @@ public class LyncSignIn {
                 return response.newBuilder().body(ResponseBody.create(response.body().contentType(), msg)).build();
             }
         });*/
-
+        //endregion
         mLyncService = mRetrofit.create(LyncService.class);
-
+        Application.getServiceEventBus().register(this);
         GetLyncAutoDiscoveryUrl();
     }
 
+    //region Event Firing
+    @Produce
+    public ApplicationsResource getApplicationResource(){
+        return this.mApplicationResource;
+    }
+
+    private void onApplicationResourceUpdated(){
+        Application.getServiceEventBus().post(this.mApplicationResource);
+    }
+    //endregion
+
+    //region Callbacks From Web Services
     public void OnDiscoverResponse(boolean isSuccess, String url){
         if(isSuccess && !url.isEmpty())
         {
@@ -71,22 +84,18 @@ public class LyncSignIn {
         }
     }
 
-    public void OnWebTicketEndpointUrl(String url)
-    {
-        if(!url.isEmpty())
-            PostOAuthUrl(url);
-    }
-
-    public void OnTokenFound(String token){
-        this.mToken = "Bearer " + token;
-        getUserUrl();
-    }
-
     public void OnApplicationsResourceFound(String resource){
-        this.mApplicationsResource = resource;
+        this.mApplicationsResourceUrl = resource;
         CreateApplicationResource();
     }
 
+    public void OnApplicationsResouceCreated(ApplicationsResource resource){
+        this.mApplicationResource = resource;
+        this.onApplicationResourceUpdated();
+    }
+    //endregion
+
+    //region Methods to perform sign in and application creation on UCWA
     private void GetLyncAutoDiscoveryUrl() {
         try {
             Call<SignInLinksResponse> call = mLyncService.GetAutoDResponse(LYNC_SERVER_API_URL);
@@ -95,12 +104,7 @@ public class LyncSignIn {
                 public void onResponse(Response<SignInLinksResponse> response, Retrofit retrofit){
                     String str = response.body().Links.user.href;
                     this.component.OnDiscoverResponse(response.isSuccess(), str);
-                    Toast.makeText(mContext, str, Toast.LENGTH_LONG).show();
-                }
-
-                @Override
-                public void onFailure(Throwable t) {
-                    Toast.makeText(mContext, t.getMessage(), Toast.LENGTH_LONG).show();
+                    Toast.makeText(mApplicationService, str, Toast.LENGTH_LONG).show();
                 }
             };
             call.enqueue(cb);
@@ -108,126 +112,102 @@ public class LyncSignIn {
 
         }
         catch (Exception e){
-            Toast.makeText(mContext, e.getMessage(), Toast.LENGTH_LONG).show();
+            Toast.makeText(mApplicationService, e.getMessage(), Toast.LENGTH_LONG).show();
         }
     }
 
-    private void getUserUrl()
-    {
+    private void getUserUrl() {
         try {
-            Call<SignInLinksResponse> call = mLyncService.GetUserResponse(this.mUserUrl, this.mToken);
-            Callback<SignInLinksResponse> cb = new CustomCallBack<SignInLinksResponse>(this) {
+            URL url = new URL(this.mUserUrl);
+            GetTokenRequestContext context = new GetTokenRequestContext(this, this.mUserUrl);
+            mApplicationService.getCWTTokenProvider().GetToken(url, context, new CustomGetTokenCallback() {
                 @Override
-                public void onResponse(Response<SignInLinksResponse> response, Retrofit retrofit){
-                    String webTicketEndpointUrl = "";
-                    String grantType = "";
-
-                    if (response.isSuccess())
-                    {
-                        String applicationsResource = response.body().Links.applications.href;
-                        Toast.makeText(mContext, applicationsResource, Toast.LENGTH_LONG).show();
-                        this.component.OnApplicationsResourceFound(applicationsResource);
-                    }
-                    else if(response.code() == 401) {
-                        Headers headers = response.headers();
-                        Map<String, List<String>> map = headers.toMultimap();
-                        List<String> list = map.get("WWW-Authenticate");
-                        Iterator it = list.iterator();
-                        while(it.hasNext()) {
-                            String data = (String) it.next();
-
-                            if (data.contains("MsRtcOAuth")) {
-                                int indx1, indx2;
-                                indx1 = data.indexOf("href=\"");
-                                if (indx1 != -1 && indx1 + 6 < data.length()) {
-                                    indx2 = data.indexOf('"', indx1 + 6);
-                                    if (indx2 != -1)
-                                        webTicketEndpointUrl = data.substring(indx1 + 6, indx2);
-                                }
-                                indx1 = data.indexOf("grant_type=\"");
-                                if (indx1 != -1 && indx1 + 12 < data.length()) {
-                                    indx2 = data.indexOf('"', indx1 + 12);
-                                    if (indx2 != -1)
-                                        grantType = data.substring(indx1 + 12, indx2);
-                                }
-                                break;
+                public void OnTokenRetrieved(Object userContext, String token) {
+                    GetTokenRequestContext requestContext = (GetTokenRequestContext) userContext;
+                    Call<SignInLinksResponse> call = mLyncService.GetUserResponse(requestContext.urlToRequest, token);
+                    Callback<SignInLinksResponse> cb = new CustomCallBack<SignInLinksResponse>(requestContext.signIn) {
+                        @Override
+                        public void onResponse(Response<SignInLinksResponse> response, Retrofit retrofit) {
+                            if (response.isSuccess()) {
+                                String applicationsResource = response.body().Links.applications.href;
+                                Toast.makeText(mApplicationService, applicationsResource, Toast.LENGTH_LONG).show();
+                                this.component.OnApplicationsResourceFound(applicationsResource);
                             }
                         }
-                        Toast.makeText(mContext, webTicketEndpointUrl, Toast.LENGTH_LONG).show();
-                        this.component.OnWebTicketEndpointUrl(webTicketEndpointUrl);
-                    }
+                    };
+                    call.enqueue(cb);
                 }
-                @Override
-                public void onFailure(Throwable t) {
-                    Toast.makeText(mContext, t.getMessage(), Toast.LENGTH_LONG).show();
-                }
-            };
-            call.enqueue(cb);
+            });
         }
         catch (Exception e){
-            Toast.makeText(mContext, e.getMessage(), Toast.LENGTH_LONG).show();
+            this.onOperationFailure("getUserUrl", e.getMessage());
         }
     }
 
-    public void PostOAuthUrl(String url)
-    {
+    private void CreateApplicationResource() {
         try {
-            //"grant_type=password&username=lmtest5@microsoft.com&password=Pass@sept2015";
-            Call<OAuthTokenResponse> call = mLyncService.GetOAuthToken(url, "password", "lmtest5@microsoft.com", "Pass@sept2015");
-            Callback<OAuthTokenResponse> cb = new CustomCallBack<OAuthTokenResponse>(this) {
+            URL url = new URL(this.mApplicationsResourceUrl);
+            GetTokenRequestContext context = new GetTokenRequestContext(this, this.mApplicationsResourceUrl);
+            mApplicationService.getCWTTokenProvider().GetToken(url, context, new CustomGetTokenCallback() {
                 @Override
-                public void onResponse(Response<OAuthTokenResponse> response, Retrofit retrofit){
-                    String token = "";
-
-                    if  (response.code() == 200){
-                        token = response.body().accessToken;
-                    }
-
-                    Toast.makeText(mContext, token, Toast.LENGTH_LONG).show();
-                    this.component.OnTokenFound(token);
+                public void OnTokenRetrieved(Object userContext, String token) {
+                    GetTokenRequestContext requestContext = (GetTokenRequestContext) userContext;
+                    Call<ApplicationsResource> call = mLyncService.CreateApplicationResource(requestContext.urlToRequest, token, new ApplicationResourceRequest("en-US", "131313", "262626", "abcdtesttest"));
+                    Callback<ApplicationsResource> cb = new CustomCallBack<ApplicationsResource>(requestContext.signIn) {
+                        @Override
+                        public void onResponse(Response<ApplicationsResource> response, Retrofit retrofit) {
+                            int code = response.code();
+                            if (response.isSuccess()) {
+                                ApplicationsResource resource = response.body();
+                                String myPhotoUrl = resource.Embedded.me.Links.photo.href;
+                                this.component.OnApplicationsResouceCreated(resource);
+                            }
+                        }
+                    };
+                    call.enqueue(cb);
                 }
-                @Override
-                public void onFailure(Throwable t) {
-                    Toast.makeText(mContext, t.getMessage(), Toast.LENGTH_LONG).show();
-                }
-            };
-            call.enqueue(cb);
-        }
-        catch (Exception e){
-            Toast.makeText(mContext, e.getMessage(), Toast.LENGTH_LONG).show();
-        }
-    }
-
-
-    private void CreateApplicationResource(){
-        try {
-            Call<Object> call = mLyncService.CreateApplicationResource(this.mApplicationsResource, this.mToken, new ApplicationResourceRequest("en-US", "13", "26", "test"));
-            Callback<Object> cb = new CustomCallBack<Object>(this) {
-                @Override
-                public void onResponse(Response<Object> response, Retrofit retrofit){
-
-                    int code = response.code();
-
-                    Toast.makeText(mContext, code, Toast.LENGTH_LONG).show();
-                    //this.component.OnApplicationsResouceCreated();
-                }
-
-                @Override
-                public void onFailure(Throwable t) {
-                    Toast.makeText(mContext, t.getMessage(), Toast.LENGTH_LONG).show();
-                }
-            };
-            call.enqueue(cb);
-        }
-        catch (Exception e){
-            Toast.makeText(mContext, e.getMessage(), Toast.LENGTH_LONG).show();
+            });
+        } catch (Exception e){
+            onOperationFailure("Create Application Resource", e.getMessage());
         }
     }
+    //endregion
+
+    //region Helper Methods
+    public void onOperationFailure(String component, String message){
+        Toast.makeText(mApplicationService, "Component = " + component + " message = " + message, Toast.LENGTH_LONG).show();
+    }
+    //endregion
+
+    //region Helper Classes
     abstract class CustomCallBack<T> implements Callback<T>{
-            protected LyncSignIn component = null;
-            public CustomCallBack(LyncSignIn component ) {
-                    this.component = component ;
-                }
+        protected LyncSignIn component = null;
+        public CustomCallBack(LyncSignIn component ) {
+                this.component = component ;
+            }
+
+        @Override
+        public void onFailure(Throwable t) {
+            this.component.onOperationFailure("send authenticated request", t.getMessage());
+        }
     }
 
+    abstract class CustomGetTokenCallback implements GetTokenCallback{
+        @Override
+        public void OnTokenRetrievalFailed(Object userContext) {
+            GetTokenRequestContext requestContext = (GetTokenRequestContext)userContext;
+            requestContext.signIn.onOperationFailure("get token failed", "");
+        }
+    }
+
+    class GetTokenRequestContext{
+        public final LyncSignIn signIn;
+        public final String urlToRequest;
+
+        public GetTokenRequestContext(LyncSignIn signIn, String url){
+            this.signIn = signIn;
+            this.urlToRequest = url;
+        }
+    }
+    //endregion
 }
