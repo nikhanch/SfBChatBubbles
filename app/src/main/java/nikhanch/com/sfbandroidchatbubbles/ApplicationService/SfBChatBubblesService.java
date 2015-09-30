@@ -7,6 +7,7 @@ import android.os.IBinder;
 
 import com.squareup.otto.Produce;
 
+import nikhanch.com.sfbandroidchatbubbles.ApplicationService.BuddylistManager.BuddylistManager;
 import nikhanch.com.sfbandroidchatbubbles.ApplicationService.WebTicket.CWTTokenProvider;
 import nikhanch.com.sfbandroidchatbubbles.ApplicationService.WebTicket.ICWTTokenProvider;
 
@@ -15,11 +16,13 @@ import nikhanch.com.sfbandroidchatbubbles.ApplicationService.WebTicket.ICWTToken
  */
 public class SfBChatBubblesService extends Service{
 
+    public static SfBChatBubblesService GetInstance = null;
     private final IBinder mBinder = new SfBChatBubblesServiceBinder();
     // Declare Service Members/Components here
 
     private LyncSignIn mLyncSignIn;
     private ICWTTokenProvider mCWTTokenProvider;
+    private BuddylistManager mBuddylistManager;
 
     private boolean serviceStarted = false;
 
@@ -33,6 +36,7 @@ public class SfBChatBubblesService extends Service{
 
     @Override
     public void onDestroy() {
+        this.GetInstance = null;
         this.serviceStarted = false;
     }
 
@@ -41,9 +45,10 @@ public class SfBChatBubblesService extends Service{
         if (this.isServiceStarted()){
             return;
         }
-
+        this.GetInstance = this;
         this.mCWTTokenProvider = new CWTTokenProvider(this);
         this.mLyncSignIn = new LyncSignIn(this);
+        this.mBuddylistManager = new BuddylistManager(this);
 
         // Init Service Members/Components here
         this.serviceStarted = true;
@@ -64,6 +69,10 @@ public class SfBChatBubblesService extends Service{
 
     public ICWTTokenProvider getCWTTokenProvider(){
         return this.mCWTTokenProvider;
+    }
+
+    public BuddylistManager getBuddylistManager(){
+        return this.mBuddylistManager;
     }
 
     public class SfBChatBubblesServiceBinder extends Binder {

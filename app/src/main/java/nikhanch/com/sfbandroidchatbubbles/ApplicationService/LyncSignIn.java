@@ -8,6 +8,7 @@ import com.squareup.okhttp.ResponseBody;
 import com.squareup.otto.Produce;
 
 import java.io.IOException;
+import java.net.MalformedURLException;
 import java.net.URL;
 
 import nikhanch.com.sfbandroidchatbubbles.Application;
@@ -31,7 +32,8 @@ public class LyncSignIn {
     public final SfBChatBubblesService mApplicationService;
     private String mUserUrl;
     private String mToken;
-    private String mApplicationsResourceUrl;
+    private URL mApplicationsResourceUrl;
+
     private ApplicationsResource mApplicationResource;
     private Retrofit mRetrofit;
     private LyncService mLyncService;
@@ -64,6 +66,10 @@ public class LyncSignIn {
         GetLyncAutoDiscoveryUrl();
     }
 
+    public URL getApplicationResourceUrl(){
+       return  this.mApplicationsResourceUrl;
+    }
+
     //region Event Firing
     @Produce
     public ApplicationsResource getApplicationResource(){
@@ -85,8 +91,12 @@ public class LyncSignIn {
     }
 
     public void OnApplicationsResourceFound(String resource){
-        this.mApplicationsResourceUrl = resource;
-        CreateApplicationResource();
+        try {
+            this.mApplicationsResourceUrl = new URL(resource);
+            CreateApplicationResource();
+        }catch (MalformedURLException e){
+            onOperationFailure("Create app resource url from string", e.getMessage());
+        }
     }
 
     public void OnApplicationsResouceCreated(ApplicationsResource resource){
@@ -108,8 +118,6 @@ public class LyncSignIn {
                 }
             };
             call.enqueue(cb);
-
-
         }
         catch (Exception e){
             Toast.makeText(mApplicationService, e.getMessage(), Toast.LENGTH_LONG).show();
@@ -146,9 +154,8 @@ public class LyncSignIn {
 
     private void CreateApplicationResource() {
         try {
-            URL url = new URL(this.mApplicationsResourceUrl);
-            GetTokenRequestContext context = new GetTokenRequestContext(this, this.mApplicationsResourceUrl);
-            mApplicationService.getCWTTokenProvider().GetToken(url, context, new CustomGetTokenCallback() {
+            GetTokenRequestContext context = new GetTokenRequestContext(this, this.mApplicationsResourceUrl.toString());
+            mApplicationService.getCWTTokenProvider().GetToken(this.mApplicationsResourceUrl, context, new CustomGetTokenCallback() {
                 @Override
                 public void OnTokenRetrieved(Object userContext, String token) {
                     GetTokenRequestContext requestContext = (GetTokenRequestContext) userContext;
