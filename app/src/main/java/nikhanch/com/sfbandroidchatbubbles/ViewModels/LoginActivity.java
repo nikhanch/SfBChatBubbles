@@ -1,5 +1,7 @@
 package nikhanch.com.sfbandroidchatbubbles.ViewModels;
 
+import android.content.Context;
+import android.graphics.PixelFormat;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.view.Menu;
@@ -8,15 +10,86 @@ import com.crashlytics.android.Crashlytics;
 import io.fabric.sdk.android.Fabric;
 import nikhanch.com.sfbandroidchatbubbles.R;
 
-public class LoginActivity extends AppCompatActivity {
+import android.view.View;
+import android.view.ViewGroup;
+import android.view.WindowManager;
+import android.widget.Button;
+import android.widget.Toast;
 
-    @Override
+import android.view.LayoutInflater;
+
+import com.txusballesteros.bubbles.BubblesManager;
+import com.txusballesteros.bubbles.BubbleLayout;
+import com.txusballesteros.bubbles.OnInitializedCallback;
+
+
+    public class LoginActivity extends AppCompatActivity {
+
+    private com.txusballesteros.bubbles.BubblesManager bubblesManager;
+
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
         setContentView(R.layout.activity_login);
+
+        final Button button = (Button) findViewById(R.id.button);
+        button.setOnClickListener(new View.OnClickListener(){
+            public void onClick(View v) {
+                addNewView();
+            }
+        });
+
+        initializeBubblesManager();
     }
 
+
+    private void addNewBubble() {
+        BubbleLayout bubbleView = (BubbleLayout)LayoutInflater.from(LoginActivity.this).inflate(R.layout.bubble_layout, null);
+        bubbleView.setOnBubbleRemoveListener(new BubbleLayout.OnBubbleRemoveListener() {
+            @Override
+            public void onBubbleRemoved(BubbleLayout bubble) { }
+        });
+        bubbleView.setOnBubbleClickListener(new BubbleLayout.OnBubbleClickListener() {
+
+            @Override
+            public void onBubbleClick(BubbleLayout bubble) {
+                Toast.makeText(getApplicationContext(), "Clicked !",
+                        Toast.LENGTH_SHORT).show();
+            }
+        });
+        bubbleView.setShouldStickToWall(true);
+        bubblesManager.addBubble(bubbleView, 60, 20);
+    }
+
+    public void addNewView()
+    {
+        final WindowManager.LayoutParams params = new WindowManager.LayoutParams(
+                WindowManager.LayoutParams.WRAP_CONTENT,
+                WindowManager.LayoutParams.WRAP_CONTENT,
+                WindowManager.LayoutParams.TYPE_PHONE,
+                WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE,
+                PixelFormat.TRANSLUCENT);
+
+        WindowManager wm = (WindowManager) getApplicationContext()
+                .getSystemService(Context.WINDOW_SERVICE);
+
+        ViewGroup mTopView = (ViewGroup) LayoutInflater.from(LoginActivity.this).inflate(R.layout.activity_chat, null);
+        getWindow().setAttributes(params);
+        wm.addView(mTopView, params);
+    }
+
+    private void initializeBubblesManager() {
+        bubblesManager = new BubblesManager.Builder(this)
+                .setTrashLayout(R.layout.bubble_trash_layout)
+                .setInitializationCallback(new OnInitializedCallback() {
+                    @Override
+                    public void onInitialized() {
+                        addNewBubble();
+                    }
+                })
+                .build();
+        bubblesManager.initialize();
+    }
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
@@ -38,5 +111,12 @@ public class LoginActivity extends AppCompatActivity {
         }
 
         return super.onOptionsItemSelected(item);
+    }
+
+    @Override
+    protected void onDestroy()
+    {
+        super.onDestroy();
+        bubblesManager.recycle();
     }
 }
