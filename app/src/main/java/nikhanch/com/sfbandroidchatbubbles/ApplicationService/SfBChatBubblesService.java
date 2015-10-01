@@ -8,6 +8,7 @@ import android.os.IBinder;
 import com.squareup.otto.Produce;
 
 import nikhanch.com.sfbandroidchatbubbles.ApplicationService.BuddylistManager.BuddylistManager;
+import nikhanch.com.sfbandroidchatbubbles.ApplicationService.MeetingsManager.MeetingsManager;
 import nikhanch.com.sfbandroidchatbubbles.ApplicationService.WebTicket.CWTTokenProvider;
 import nikhanch.com.sfbandroidchatbubbles.ApplicationService.WebTicket.ICWTTokenProvider;
 
@@ -23,6 +24,7 @@ public class SfBChatBubblesService extends Service{
     private LyncSignIn mLyncSignIn;
     private ICWTTokenProvider mCWTTokenProvider;
     private BuddylistManager mBuddylistManager;
+    private MeetingsManager mMeetingsManager;
 
     private boolean serviceStarted = false;
 
@@ -49,6 +51,7 @@ public class SfBChatBubblesService extends Service{
         this.mCWTTokenProvider = new CWTTokenProvider(this);
         this.mLyncSignIn = new LyncSignIn(this);
         this.mBuddylistManager = new BuddylistManager(this);
+        this.mMeetingsManager = new MeetingsManager(this);
 
         // Init Service Members/Components here
         this.serviceStarted = true;
@@ -74,6 +77,8 @@ public class SfBChatBubblesService extends Service{
     public BuddylistManager getBuddylistManager(){
         return this.mBuddylistManager;
     }
+
+    public MeetingsManager getMeetingsManager() { return this.mMeetingsManager; }
 
     public class SfBChatBubblesServiceBinder extends Binder {
         public SfBChatBubblesService getSfBChatBubblesService(){
