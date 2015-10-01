@@ -18,14 +18,18 @@ public class ApplicationResourceRequest {
     @SerializedName("userAgent")
     public String userAgent;
 
+    @SerializedName("type")
+    public String type;
+
     ApplicationResourceRequest(){
 
     }
 
-    ApplicationResourceRequest(String culture, String endpointId, String instanceId, String userAgent){
+    ApplicationResourceRequest(String culture, String endpointId, String instanceId, String userAgent, String type){
         this.culture = culture;
         this.endpointId = endpointId;
         this.instanceId = instanceId;
         this.userAgent = userAgent;
+        this.type = type;
     }
 }

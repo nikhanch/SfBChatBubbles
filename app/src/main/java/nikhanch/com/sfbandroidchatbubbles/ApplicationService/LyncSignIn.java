@@ -10,9 +10,13 @@ import com.squareup.otto.Produce;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.util.ArrayList;
+import java.util.List;
 
 import nikhanch.com.sfbandroidchatbubbles.Application;
 import nikhanch.com.sfbandroidchatbubbles.ApplicationService.WebTicket.GetTokenCallback;
+import nikhanch.com.sfbandroidchatbubbles.ApplicationServiceUtils.RetrofitInterceptor;
+import nikhanch.com.sfbandroidchatbubbles.ApplicationServiceUtils.UriUtils;
 import okio.Buffer;
 import retrofit.Call;
 import retrofit.Callback;
@@ -101,6 +105,17 @@ public class LyncSignIn {
 
     public void OnApplicationsResouceCreated(ApplicationsResource resource){
         this.mApplicationResource = resource;
+
+        if (mApplicationResource.Embedded.me.Links.makeMeAvailable != null) {
+            makeMeAvailable();
+        }
+        else{
+            OnMadeAvailable();
+        }
+
+    }
+
+    public void OnMadeAvailable(){
         this.onApplicationResourceUpdated();
     }
     //endregion
@@ -155,11 +170,12 @@ public class LyncSignIn {
     private void CreateApplicationResource() {
         try {
             GetTokenRequestContext context = new GetTokenRequestContext(this, this.mApplicationsResourceUrl.toString());
+
             mApplicationService.getCWTTokenProvider().GetToken(this.mApplicationsResourceUrl, context, new CustomGetTokenCallback() {
                 @Override
                 public void OnTokenRetrieved(Object userContext, String token) {
                     GetTokenRequestContext requestContext = (GetTokenRequestContext) userContext;
-                    Call<ApplicationsResource> call = mLyncService.CreateApplicationResource(requestContext.urlToRequest, token, new ApplicationResourceRequest("en-US", "131313", "262626", "abcdtesttest"));
+                    Call<ApplicationsResource> call = mLyncService.CreateApplicationResource(requestContext.urlToRequest, token, new ApplicationResourceRequest("en-US", "131313", "262626", "abcdtesttest", "phone"));
                     Callback<ApplicationsResource> cb = new CustomCallBack<ApplicationsResource>(requestContext.signIn) {
                         @Override
                         public void onResponse(Response<ApplicationsResource> response, Retrofit retrofit) {
@@ -174,7 +190,41 @@ public class LyncSignIn {
                     call.enqueue(cb);
                 }
             });
-        } catch (Exception e){
+        } catch (Exception e) {
+            onOperationFailure("Create Application Resource", e.getMessage());
+        }
+    }
+
+    private void makeMeAvailable() {
+        try {
+            String partialUrlStr = this.mApplicationResource.Embedded.me.Links.makeMeAvailable.href;
+
+            URL urlToGet = UriUtils.GetAbsoluteUrl(partialUrlStr);
+            GetTokenRequestContext context = new GetTokenRequestContext(this, urlToGet.toString());
+            mRetrofit.client().interceptors().add(new RetrofitInterceptor(true, true));
+            mApplicationService.getCWTTokenProvider().GetToken(urlToGet, context, new CustomGetTokenCallback() {
+                @Override
+                public void OnTokenRetrieved(Object userContext, String token) {
+                    GetTokenRequestContext requestContext = (GetTokenRequestContext) userContext;
+                    List<String> supportedMessageFormats = new ArrayList<String>();
+                    supportedMessageFormats.add("Plain");
+                    List<String> supportedModalities = new ArrayList<String>();
+                    supportedModalities.add("Messaging");
+                    MakeMeAvailableRequest req = new MakeMeAvailableRequest("+14125761138", "busy", supportedMessageFormats, supportedModalities);
+                    Call<Object> call = mLyncService.MakeMeAvailable(requestContext.urlToRequest, token, req);
+                    Callback<Object> cb = new CustomCallBack<Object>(requestContext.signIn) {
+                        @Override
+                        public void onResponse(Response<Object> response, Retrofit retrofit) {
+                            int code = response.code();
+                            if (response.isSuccess()) {
+                                this.component.OnMadeAvailable();
+                            }
+                        }
+                    };
+                    call.enqueue(cb);
+                }
+            });
+        } catch (Exception e) {
             onOperationFailure("Create Application Resource", e.getMessage());
         }
     }

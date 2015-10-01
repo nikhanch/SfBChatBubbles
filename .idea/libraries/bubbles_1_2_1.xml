@@ -1,0 +1,12 @@
+<component name="libraryTable">
+  <library name="bubbles-1.2.1">
+    <CLASSES>
+      <root url="jar://$PROJECT_DIR$/app/build/intermediates/exploded-aar/com.txusballesteros/bubbles/1.2.1/jars/classes.jar!/" />
+      <root url="file://$PROJECT_DIR$/app/build/intermediates/exploded-aar/com.txusballesteros/bubbles/1.2.1/res" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES>
+      <root url="jar://$USER_HOME$/.gradle/caches/modules-2/files-2.1/com.txusballesteros/bubbles/1.2.1/80a8fa9923a6345ae63844bf5956ae9de7d5c635/bubbles-1.2.1-sources.jar!/" />
+    </SOURCES>
+  </library>
+</component>

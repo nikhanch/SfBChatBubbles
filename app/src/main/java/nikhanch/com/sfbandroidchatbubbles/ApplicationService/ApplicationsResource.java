@@ -95,7 +95,17 @@ public class ApplicationsResource {
         }
 
     }
+    public class ConversationLogs {
 
+        @SerializedName("href")
+        @Expose
+        public String href;
+
+        public ConversationLogs(String href) {
+            this.href = href;
+        }
+
+    }
     public class Embedded {
 
         @SerializedName("me")
@@ -295,6 +305,10 @@ public class ApplicationsResource {
         @SerializedName("conversations")
         @Expose
         public Conversations conversations;
+        @SerializedName("conversationLogs")
+        @Expose
+        public ConversationLogs conversationLogs;
+
         @SerializedName("startMessaging")
         @Expose
         public StartMessaging startMessaging;

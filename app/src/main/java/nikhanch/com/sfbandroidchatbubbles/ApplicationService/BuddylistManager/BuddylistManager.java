@@ -7,6 +7,8 @@ import com.squareup.otto.Subscribe;
 
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.util.HashMap;
+import java.util.Map;
 
 import nikhanch.com.sfbandroidchatbubbles.Application;
 import nikhanch.com.sfbandroidchatbubbles.ApplicationService.ApplicationResourceRequest;
@@ -26,13 +28,15 @@ import retrofit.Retrofit;
 /**
  * Created by nikhanch on 9/30/2015.
  */
-public class BuddylistManager {
+public class BuddylistManager implements IBuddylistManager{
 
     SfBChatBubblesService mApplicationService;
     ApplicationsResource mApplicationsResource = null;
 
     Retrofit mRetrofit = null;
     LyncContactManagementService mContactManagementService = null;
+
+    Map<String, ContactModel> sipToContactModelMap = new HashMap<>();
 
     public BuddylistManager(SfBChatBubblesService service){
         this.mApplicationService = service;
@@ -42,30 +46,51 @@ public class BuddylistManager {
         Application.getServiceEventBus().register(this);
     }
 
+    //region IBuddylistManager methods
+    @Override
+    public Map<String, ContactModel> GetContactModelsMap() {
+        return this.sipToContactModelMap;
+    }
+
+    @Override
+    public ContactModel GetContactModel(String sipUri) {
+        if (this.sipToContactModelMap.containsKey(sipUri)){
+            return this.sipToContactModelMap.get(sipUri);
+        }
+        return null;
+    }
+    //endregion
+
+    //region EventListeners
     @Subscribe
     public void OnApplicationResourceUpdated(ApplicationsResource resource){
         if (resource != null && updateNeeded()){
             this.mApplicationsResource = resource;
             getMyContacts();
-            getMyGroups();
+            //getMyGroups();
         }
     }
+    //endregion
 
-    private boolean updateNeeded(){
-        return  true;
-    }
-
+    //region Callbacks from Webservice Methods
     public void onMyContactsFound(MyContactsResponse response){
+        Map<String, ContactModel> modelsUpdated = new HashMap<>();
         if (response != null && response.Embedded != null && response.Embedded.contact != null){
             for (MyContactsResponse.Contact contactRecord : response.Embedded.contact){
                 if (contactRecord != null){
                     ContactModel model = new ContactModel(contactRecord);
+                    modelsUpdated.put(model.getSipUri(), model);
+                    this.sipToContactModelMap.put(model.getSipUri(), model);
                 }
             }
         }
-        // TODO: add to list
-    }
 
+        ContactsUpdatedEvent event = new ContactsUpdatedEvent(modelsUpdated);
+        Application.getServiceEventBus().post(event);
+    }
+    //endregion
+
+    //region WebService methods
     private void getMyContacts(){
 
         URL myContactsUrl = UriUtils.GetAbsoluteUrl(this.mApplicationsResource.Embedded.people.Links.myContacts.href);
@@ -97,13 +122,19 @@ public class BuddylistManager {
     private void getMyGroups(){
         URL myGroups = UriUtils.GetAbsoluteUrl(this.mApplicationsResource.Embedded.people.Links.myGroups.href);
     }
+    //endregion
 
     //region Helper Methods
     public void onOperationFailure(String component, String message){
         Toast.makeText(mApplicationService, "Component = " + component + " message = " + message, Toast.LENGTH_LONG).show();
     }
+
+    private boolean updateNeeded(){
+        return  true;
+    }
     //endregion
 
+    //region Helper classes
     abstract class CustomRetrofitCallback<T> implements Callback<T>{
         public final BuddylistManager buddylistManager;
         CustomRetrofitCallback(BuddylistManager manager){
@@ -131,5 +162,6 @@ public class BuddylistManager {
             this.urlToGet = url;
         }
     }
+    //endregion
 
 }

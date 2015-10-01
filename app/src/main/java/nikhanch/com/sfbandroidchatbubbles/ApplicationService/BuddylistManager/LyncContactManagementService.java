@@ -8,6 +8,7 @@ import retrofit.http.Url;
 /**
  * Created by nikhanch on 9/30/2015.
  */
+
 public interface LyncContactManagementService {
 
     @GET

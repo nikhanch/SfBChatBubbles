@@ -8,6 +8,9 @@ import android.os.IBinder;
 import com.squareup.otto.Produce;
 
 import nikhanch.com.sfbandroidchatbubbles.ApplicationService.BuddylistManager.BuddylistManager;
+import nikhanch.com.sfbandroidchatbubbles.ApplicationService.BuddylistManager.IBuddylistManager;
+import nikhanch.com.sfbandroidchatbubbles.ApplicationService.CommunicationManager.CommunicationManager;
+import nikhanch.com.sfbandroidchatbubbles.ApplicationService.CommunicationManager.ICommunicationManager;
 import nikhanch.com.sfbandroidchatbubbles.ApplicationService.MeetingsManager.MeetingsManager;
 import nikhanch.com.sfbandroidchatbubbles.ApplicationService.WebTicket.CWTTokenProvider;
 import nikhanch.com.sfbandroidchatbubbles.ApplicationService.WebTicket.ICWTTokenProvider;
@@ -23,8 +26,9 @@ public class SfBChatBubblesService extends Service{
 
     private LyncSignIn mLyncSignIn;
     private ICWTTokenProvider mCWTTokenProvider;
-    private BuddylistManager mBuddylistManager;
     private MeetingsManager mMeetingsManager;
+    private IBuddylistManager mBuddylistManager;
+    private ICommunicationManager mCommunicationManager;
 
     private boolean serviceStarted = false;
 
@@ -51,6 +55,7 @@ public class SfBChatBubblesService extends Service{
         this.mCWTTokenProvider = new CWTTokenProvider(this);
         this.mLyncSignIn = new LyncSignIn(this);
         this.mBuddylistManager = new BuddylistManager(this);
+        this.mCommunicationManager = new CommunicationManager(this);
         this.mMeetingsManager = new MeetingsManager(this);
 
         // Init Service Members/Components here
@@ -74,8 +79,12 @@ public class SfBChatBubblesService extends Service{
         return this.mCWTTokenProvider;
     }
 
-    public BuddylistManager getBuddylistManager(){
+    public IBuddylistManager getBuddylistManager(){
         return this.mBuddylistManager;
+    }
+
+    public ICommunicationManager getCommunicationManager(){
+        return this.mCommunicationManager;
     }
 
     public MeetingsManager getMeetingsManager() { return this.mMeetingsManager; }

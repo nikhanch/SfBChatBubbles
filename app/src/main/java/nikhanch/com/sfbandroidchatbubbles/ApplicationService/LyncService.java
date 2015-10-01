@@ -34,6 +34,11 @@ public interface LyncService {
             @Field("password") String password
             );
 
+    @Headers("X-MS-Namespace: internal")
     @POST
     Call<ApplicationsResource> CreateApplicationResource(@Url String url, @Header("Authorization") String token, @Body ApplicationResourceRequest request);
+
+    @Headers("X-MS-Namespace: internal")
+    @POST
+    Call<Object> MakeMeAvailable(@Url String url, @Header("Authorization") String token, @Body MakeMeAvailableRequest request);
 }
