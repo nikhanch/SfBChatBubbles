@@ -88,11 +88,11 @@ import com.txusballesteros.bubbles.OnInitializedCallback;
 
     private void initializeBubblesManager() {
         bubblesManager = new BubblesManager.Builder(this)
-                .setTrashLayout(R.layout.bubble_trash_layout)
+                //.setTrashLayout(R.layout.bubble_trash_layout)
                 .setInitializationCallback(new OnInitializedCallback() {
                     @Override
                     public void onInitialized() {
-                        addNewBubble();
+                       // addNewBubble();
                     }
                 })
                 .build();

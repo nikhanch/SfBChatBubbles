@@ -28,6 +28,7 @@ public class Application extends android.app.Application {
     public static ApplicationServiceTalker getServiceTalker(){
         return serviceTalker;
     }
+
     @Override
     public void onCreate() {
         super.onCreate();

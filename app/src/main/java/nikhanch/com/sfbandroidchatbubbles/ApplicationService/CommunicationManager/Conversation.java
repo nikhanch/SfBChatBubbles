@@ -2,9 +2,13 @@ package nikhanch.com.sfbandroidchatbubbles.ApplicationService.CommunicationManag
 
 import android.widget.Toast;
 
+import com.squareup.okhttp.MediaType;
+import com.squareup.okhttp.RequestBody;
+
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Random;
 
 import nikhanch.com.sfbandroidchatbubbles.ApplicationService.LyncSignIn;
 import nikhanch.com.sfbandroidchatbubbles.ApplicationService.SfBChatBubblesService;
@@ -58,29 +62,47 @@ List<String> pendingMessages = new ArrayList();
         if (this.mConversationUrl == null){
             getConversationUrlFromInviteUrl();
         }
-        else{
-            pollConversationUrlForUpdates();
+        else if (this.mMessagingUrl == null || this.mMessagingUrl.isEmpty()){
+            getMessagingUrl();
+        }
+        else if (this.sendMessageUrl == null || this.sendMessageUrl.isEmpty()){
+            getSendMessageUrl();
         }
     }
 
     public void onConversationUrlFound(GetMessagingInviteResponse response){
         this.messagingInviteResponse = response;
-        this.mConversationUrl = response.Links.conversation.href;
+        if (response != null && response.Links != null && response.Links.conversation != null) {
+            this.mConversationUrl = response.Links.conversation.href;
+        }
         GetConversationUrls();
     }
 
     public void onMessagingUrlFound(GetConversationResponse response){
         this.conversationResponse = response;
-        this.mMessagingUrl = response.Links.messaging.href;
-        getSendMessageUrl();
+        if (response != null && response.Links != null && response.Links.messaging != null) {
+            this.mMessagingUrl = response.Links.messaging.href;
+        }
+        GetConversationUrls();
     }
 
     public void onSendMessageUrlFound(GetMessagingResourceResponse response){
-        this.sendMessageUrl = response.Links.sendMessage.href;
-        for(String message : pendingMessages){
-         //   sendMessageWebMethod(message);
+        if (response != null && response.Links != null && response.Links.sendMessage != null) {
+            this.sendMessageUrl = response.Links.sendMessage.href;
         }
-       // pendingMessages.removeAll();
+        else {
+            GetConversationUrls();
+        }
+
+        if (pendingMessages.size() > 0) {
+            for (String message : pendingMessages) {
+                sendMessageWebMethod(message);
+            }
+            pendingMessages.clear();
+        }
+        else{
+            sendMessageWebMethod("Testing 1 2 3");
+        }
     }
 
     private void getSendMessageUrl(){
@@ -137,7 +159,7 @@ List<String> pendingMessages = new ArrayList();
         }
     }
 
-    private void pollConversationUrlForUpdates(){
+    private void getMessagingUrl(){
         URL urlToGet = UriUtils.GetAbsoluteUrl(this.mConversationUrl);
         try {
             GetTokenRequestContext context = new GetTokenRequestContext(this, urlToGet);
@@ -153,6 +175,33 @@ List<String> pendingMessages = new ArrayList();
                             String headers = response.headers().toString();
                             GetConversationResponse response1 = response.body();
                             this.manager.onMessagingUrlFound(response1);
+                        }
+                    };
+                    call.enqueue(cb);
+                }
+            });
+        } catch (Exception e){
+            onOperationFailure("Create Application Resource", e.getMessage());
+        }
+    }
+
+    private void sendMessageWebMethod(String message){
+        URL urlToGet = UriUtils.GetAbsoluteUrl(this.sendMessageUrl);
+        try {
+            GetTokenRequestContext context = new GetTokenRequestContext(this, urlToGet, message);
+            mApplicationService.getCWTTokenProvider().GetToken(urlToGet, context, new CustomGetTokenCallback() {
+                @Override
+                public void OnTokenRetrieved(Object userContext, String token) {
+                    GetTokenRequestContext requestContext = (GetTokenRequestContext) userContext;
+                    RequestBody body = RequestBody.create(MediaType.parse("text/plain"), requestContext.messageToSend);
+                    Call<Object> call = mConversationService.SendMessage(requestContext.urlToGet.toString(), token, body);
+
+                    Callback<Object> cb = new CustomRetrofitCallback<Object>(requestContext.manager) {
+                        @Override
+                        public void onResponse(Response<Object> response, Retrofit retrofit) {
+                            int code = response.code();
+                            String headers = response.headers().toString();
+                            Object response1 = response.body();
                         }
                     };
                     call.enqueue(cb);
@@ -204,10 +253,20 @@ List<String> pendingMessages = new ArrayList();
     class GetTokenRequestContext {
         public final Conversation manager;
         public final URL urlToGet;
+        public final String messageToSend;
         public GetTokenRequestContext(Conversation manager, URL url){
             this.manager = manager;
             this.urlToGet = url;
+            this.messageToSend = null;
         }
+
+        public GetTokenRequestContext(Conversation manager, URL url, String messageToSend){
+            this.manager = manager;
+            this.urlToGet = url;
+            this.messageToSend = messageToSend;
+        }
+
+
     }
 
 

@@ -118,7 +118,7 @@ public class CWTTokenProvider implements ICWTTokenProvider{
                                 break;
                             }
                         }
-                       // Toast.makeText(mContext, webTicketEndpointUrl, Toast.LENGTH_LONG).show();
+                        //Toast.makeText(mContext, webTicketEndpointUrl, Toast.LENGTH_LONG).show();
                         try{
                             URL webTicketUrl = new URL(webTicketEndpointUrl);
                             this.component.OnWebTicketEndpointUrlFound(webTicketUrl, this.tokenForHost);

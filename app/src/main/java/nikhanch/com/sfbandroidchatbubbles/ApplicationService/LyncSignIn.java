@@ -129,7 +129,7 @@ public class LyncSignIn {
                 public void onResponse(Response<SignInLinksResponse> response, Retrofit retrofit){
                     String str = response.body().Links.user.href;
                     this.component.OnDiscoverResponse(response.isSuccess(), str);
-                    Toast.makeText(mApplicationService, str, Toast.LENGTH_LONG).show();
+                    //Toast.makeText(mApplicationService, str, Toast.LENGTH_LONG).show();
                 }
             };
             call.enqueue(cb);
@@ -153,7 +153,7 @@ public class LyncSignIn {
                         public void onResponse(Response<SignInLinksResponse> response, Retrofit retrofit) {
                             if (response.isSuccess()) {
                                 String applicationsResource = response.body().Links.applications.href;
-                                Toast.makeText(mApplicationService, applicationsResource, Toast.LENGTH_LONG).show();
+                                //Toast.makeText(mApplicationService, applicationsResource, Toast.LENGTH_LONG).show();
                                 this.component.OnApplicationsResourceFound(applicationsResource);
                             }
                         }
