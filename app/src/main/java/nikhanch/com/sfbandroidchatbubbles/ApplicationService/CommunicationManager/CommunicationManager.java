@@ -98,7 +98,7 @@ Map<String, Conversation> sipUriToConversation = new HashMap<>();
     }
 
     public void OnConversationHistoryRetrieved(int code){
-        //this.StartConversation("sip:dmitsh@microsoft.com", "Testing 123");
+        //this.StartConversation("sip:nickbi@microsoft.com", "Testing 123");
     }
 
     public void OnConversationCreated(String location, MessagingInviteRequest request){

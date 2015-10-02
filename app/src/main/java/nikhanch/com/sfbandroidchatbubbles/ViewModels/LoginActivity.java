@@ -14,6 +14,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.view.WindowManager;
 import android.widget.Button;
+import android.widget.ListView;
 import android.widget.Toast;
 
 import android.view.LayoutInflater;
@@ -46,57 +47,27 @@ import com.txusballesteros.bubbles.OnInitializedCallback;
                 startActivity(listView);
             }
         });
-
-        initializeBubblesManager();
     }
 
 
-    private void addNewBubble() {
-        BubbleLayout bubbleView = (BubbleLayout)LayoutInflater.from(LoginActivity.this).inflate(R.layout.bubble_layout, null);
-        bubbleView.setOnBubbleRemoveListener(new BubbleLayout.OnBubbleRemoveListener() {
-            @Override
-            public void onBubbleRemoved(BubbleLayout bubble) { }
-        });
-        bubbleView.setOnBubbleClickListener(new BubbleLayout.OnBubbleClickListener() {
-
-            @Override
-            public void onBubbleClick(BubbleLayout bubble) {
-                Toast.makeText(getApplicationContext(), "Clicked !",
-                        Toast.LENGTH_SHORT).show();
-            }
-        });
-        bubbleView.setShouldStickToWall(true);
-        bubblesManager.addBubble(bubbleView, 60, 20);
-    }
 
     public void addNewView()
     {
         final WindowManager.LayoutParams params = new WindowManager.LayoutParams(
+                800,
+                600,
                 WindowManager.LayoutParams.WRAP_CONTENT,
                 WindowManager.LayoutParams.WRAP_CONTENT,
                 WindowManager.LayoutParams.TYPE_PHONE,
-                WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE,
+                /*WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE |*/ WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS,
                 PixelFormat.TRANSLUCENT);
 
         WindowManager wm = (WindowManager) getApplicationContext()
                 .getSystemService(Context.WINDOW_SERVICE);
 
         ViewGroup mTopView = (ViewGroup) LayoutInflater.from(LoginActivity.this).inflate(R.layout.activity_chat, null);
-        getWindow().setAttributes(params);
-        wm.addView(mTopView, params);
-    }
 
-    private void initializeBubblesManager() {
-        bubblesManager = new BubblesManager.Builder(this)
-                //.setTrashLayout(R.layout.bubble_trash_layout)
-                .setInitializationCallback(new OnInitializedCallback() {
-                    @Override
-                    public void onInitialized() {
-                       // addNewBubble();
-                    }
-                })
-                .build();
-        bubblesManager.initialize();
+        wm.addView(mTopView, params);
     }
 
     @Override
@@ -125,6 +96,5 @@ import com.txusballesteros.bubbles.OnInitializedCallback;
     protected void onDestroy()
     {
         super.onDestroy();
-        bubblesManager.recycle();
     }
 }

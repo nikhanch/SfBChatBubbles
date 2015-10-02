@@ -12,13 +12,14 @@ import nikhanch.com.sfbandroidchatbubbles.ApplicationService.BuddylistManager.IB
 import nikhanch.com.sfbandroidchatbubbles.ApplicationService.CommunicationManager.CommunicationManager;
 import nikhanch.com.sfbandroidchatbubbles.ApplicationService.CommunicationManager.ICommunicationManager;
 import nikhanch.com.sfbandroidchatbubbles.ApplicationService.MeetingsManager.MeetingsManager;
+import nikhanch.com.sfbandroidchatbubbles.ApplicationService.PopUpManager.PopUpManager;
 import nikhanch.com.sfbandroidchatbubbles.ApplicationService.WebTicket.CWTTokenProvider;
 import nikhanch.com.sfbandroidchatbubbles.ApplicationService.WebTicket.ICWTTokenProvider;
 
 /**
  * Created by nikhanch on 9/27/2015.
  */
-public class SfBChatBubblesService extends Service{
+public class  SfBChatBubblesService extends Service{
 
     public static SfBChatBubblesService GetInstance = null;
     private final IBinder mBinder = new SfBChatBubblesServiceBinder();
@@ -29,6 +30,7 @@ public class SfBChatBubblesService extends Service{
     private MeetingsManager mMeetingsManager;
     private IBuddylistManager mBuddylistManager;
     private ICommunicationManager mCommunicationManager;
+    private PopUpManager mPopUpManager;
 
     private boolean serviceStarted = false;
 
@@ -57,6 +59,7 @@ public class SfBChatBubblesService extends Service{
         this.mBuddylistManager = new BuddylistManager(this);
         this.mCommunicationManager = new CommunicationManager(this);
         this.mMeetingsManager = new MeetingsManager(this);
+        this.mPopUpManager = new PopUpManager(this);
 
         // Init Service Members/Components here
         this.serviceStarted = true;

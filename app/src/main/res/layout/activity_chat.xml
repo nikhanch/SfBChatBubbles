@@ -13,7 +13,8 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:layout_above="@+id/send_message_layout"
-        android:divider="@null" />
+        android:divider="@null"
+        android:background="#ffffffff"/>
 
     <LinearLayout
         android:id="@+id/send_message_layout"
@@ -28,7 +29,8 @@
             android:id="@+id/iv_image"
             android:layout_width="40dp"
             android:layout_height="40dp"
-            android:src="@mipmap/ic_launcher" />
+            android:src="@mipmap/ic_launcher"
+            android:visibility="gone"/>
 
         <EditText
             android:id="@+id/et_message"
@@ -42,5 +44,14 @@
             android:layout_height="wrap_content"
             android:text="Send" />
     </LinearLayout>
+
+    <ImageView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:id="@+id/closeImageView"
+        android:layout_alignParentTop="true"
+        android:layout_alignParentEnd="true"
+        android:src="@mipmap/bubble_trash_background"
+        android:visibility="invisible"/>
 
 </RelativeLayout>

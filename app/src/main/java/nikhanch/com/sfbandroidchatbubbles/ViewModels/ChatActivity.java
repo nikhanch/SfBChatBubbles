@@ -19,6 +19,7 @@ import com.squareup.otto.Subscribe;
 
 import nikhanch.com.sfbandroidchatbubbles.Application;
 import nikhanch.com.sfbandroidchatbubbles.ApplicationService.ApplicationsResource;
+import nikhanch.com.sfbandroidchatbubbles.ApplicationService.CommunicationManager.AutoReply;
 import nikhanch.com.sfbandroidchatbubbles.ApplicationService.CommunicationManager.ConversationEvent;
 import nikhanch.com.sfbandroidchatbubbles.ApplicationService.CommunicationManager.MessageResponseEvent;
 import nikhanch.com.sfbandroidchatbubbles.Models.ContactModel;
@@ -35,7 +36,7 @@ public class ChatActivity extends AppCompatActivity {
 
     private String mSipUri;
     private ContactModel mContactModel;
-private boolean signInComplete = false;
+    private boolean signInComplete = false;
     private ChatMessageAdapter mAdapter;
 
     private nikhanch.com.sfbandroidchatbubbles.ApplicationService.CommunicationManager.Conversation conversation = null;
@@ -119,26 +120,33 @@ private boolean signInComplete = false;
             conversation.SendMessageInConversation(message);
         }
         ChatMessage chatMessage = new ChatMessage(message, true, false);
-        mAdapter.add(chatMessage);
+        addChatMessage(chatMessage);
+
+        Application.getServiceEventBus().post(new MessageResponseEvent(message, mSipUri));
     }
 
     private void mimicOtherMessage(String message) {
         ChatMessage chatMessage = new ChatMessage(message, false, false);
-        mAdapter.add(chatMessage);
+        addChatMessage(chatMessage);
     }
 
     private void sendMessage() {
         ChatMessage chatMessage = new ChatMessage(null, true, true);
-        mAdapter.add(chatMessage);
+        addChatMessage(chatMessage);
 
         mimicOtherMessage();
     }
 
     private void mimicOtherMessage() {
         ChatMessage chatMessage = new ChatMessage(null, false, true);
-        mAdapter.add(chatMessage);
+        addChatMessage(chatMessage);
     }
 
+    private void addChatMessage(ChatMessage message)
+    {
+        mAdapter.add(message);
+        mListView.setSelection(mAdapter.getCount() - 1);
+    }
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {

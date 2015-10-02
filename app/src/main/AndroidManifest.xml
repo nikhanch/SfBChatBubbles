@@ -25,7 +25,6 @@
         <activity
             android:name=".ViewModels.BuddyActivity"
             android:label="Contact List">
-
         </activity>
         <activity
             android:name=".ViewModels.ChatActivity"
