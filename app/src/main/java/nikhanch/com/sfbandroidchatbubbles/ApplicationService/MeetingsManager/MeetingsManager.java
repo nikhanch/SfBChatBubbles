@@ -32,6 +32,8 @@ public class MeetingsManager {
     Retrofit mRetrofit = null;
     MeetingsManagementService mMeetingsManagementService = null;
 
+    MyMeetingsEvent mMeetingsEvent = null;
+
     public MeetingsManager(SfBChatBubblesService service){
         this.mApplicationService = service;
         this.mRetrofit = new Retrofit.Builder().baseUrl(LyncSignIn.LYNC_SERVER_API_URL).addConverterFactory(GsonConverterFactory.create()).build();
@@ -69,10 +71,10 @@ public class MeetingsManager {
                                 MyMeetingsResponse resource = response.body();
 
                                 List<MyMeetingsResponse.MyOnlineMeeting> myOnlineMeetings = resource.Embedded.myOnlineMeeting;
-
-                                Iterator<MyMeetingsResponse.MyOnlineMeeting> iter = myOnlineMeetings.iterator();
-                                while (iter.hasNext()) {
-                                    this.meetingsManager.OnOnlineMeeting(iter.next());
+                                mMeetingsEvent = new MyMeetingsEvent(myOnlineMeetings.size());
+                                for(int i=0; i<myOnlineMeetings.size(); i++)
+                                {
+                                    this.meetingsManager.OnOnlineMeeting(myOnlineMeetings.get(i));
                                 }
                             }
                         }
@@ -104,7 +106,13 @@ public class MeetingsManager {
                             if (response.isSuccess()) {
                                 MyOnlineMeetingsResponse resource = response.body();
                                 Toast.makeText(mApplicationService, "joinUrl = " + resource.joinUrl, Toast.LENGTH_LONG).show();
-                                Application.getServiceEventBus().post(resource);
+
+                                if(mMeetingsEvent != null) {
+                                    mMeetingsEvent.add(resource);
+                                    if(mMeetingsEvent.size() == mMeetingsEvent.capacity()) {
+                                        Application.getServiceEventBus().post(mMeetingsEvent);
+                                    }
+                                }
                             }
                         }
                     };
