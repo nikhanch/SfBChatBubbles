@@ -8,12 +8,15 @@ import android.widget.ArrayAdapter;
 import android.widget.ImageView;
 import android.widget.TextView;
 
+import com.squareup.picasso.Callback;
 import com.squareup.picasso.Picasso;
 
+import java.io.File;
 import java.net.URL;
 import java.util.ArrayList;
 
 import nikhanch.com.sfbandroidchatbubbles.Models.ContactModel;
+import nikhanch.com.sfbandroidchatbubbles.Models.PhotoDownloadCallback;
 import nikhanch.com.sfbandroidchatbubbles.R;
 import retrofit.http.Url;
 
@@ -43,11 +46,13 @@ public class BuddyAdapter extends ArrayAdapter<ContactModel> {
 
         convertView = LayoutInflater.from(getContext()).inflate(R.layout.item_buddy, parent, false);
 
+        ContactModel model = getItem(position);
         TextView textView = (TextView) convertView.findViewById(R.id.text);
         textView.setText(getItem(position).getName());
 
-
         ImageView imageView = (ImageView) convertView.findViewById(R.id.image);
+
+        model.getPhoto(new photoCallback(imageView));
 
         //Won't use picasso right now, need creds in order to download
         /*
@@ -57,5 +62,18 @@ public class BuddyAdapter extends ArrayAdapter<ContactModel> {
         }*/
 
         return convertView;
+    }
+
+    class photoCallback implements PhotoDownloadCallback{
+        ImageView tobindto;
+        photoCallback(ImageView v){
+            this.tobindto = v;
+        }
+        @Override
+        public void OnPhotoDownloaded(File photo) {
+            if (photo != null){
+                Picasso.with(getContext()).load(photo).transform(new CircleImageTransform()).into(this.tobindto);
+            }
+        }
     }
 }

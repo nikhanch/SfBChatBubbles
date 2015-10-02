@@ -31,6 +31,9 @@ public class OAuthToken {
             timeCreated = System.currentTimeMillis();
         }
 
+        void initTime(){
+            this.timeCreated = System.currentTimeMillis();
+        }
         boolean isValid(){
             long currentTime = System.currentTimeMillis();
             long expiresInMs = expiresIn * 1000;

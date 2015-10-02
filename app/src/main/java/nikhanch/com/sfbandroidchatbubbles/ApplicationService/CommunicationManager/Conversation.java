@@ -51,7 +51,7 @@ public class Conversation {
     }
 
     public void SendMessageInConversation(String message){
-        if (!this.mMessagingUrl.isEmpty()){
+        if (this.sendMessageUrl != null && !this.sendMessageUrl.isEmpty()){
            sendMessageWebMethod(message);
         }
         else{
@@ -94,6 +94,7 @@ public class Conversation {
         }
         else {
             GetConversationUrls();
+            return;
         }
 
         if (pendingMessages.size() > 0) {
@@ -216,11 +217,12 @@ public class Conversation {
     }
 
     public void onMessageSent(){
+        final String sipUrl = this.mRecepient;
         Handler h = new Handler();
         h.postDelayed(new Runnable() {
             @Override
             public void run() {
-                Application.getServiceEventBus().post(new MessageResponseEvent(AutoReply.getText()));
+                Application.getServiceEventBus().post(new MessageResponseEvent(AutoReply.getText(), sipUrl));
             }
         }, 1000);
     }

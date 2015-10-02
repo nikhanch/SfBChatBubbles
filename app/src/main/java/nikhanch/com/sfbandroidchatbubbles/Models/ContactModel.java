@@ -1,11 +1,16 @@
 package nikhanch.com.sfbandroidchatbubbles.Models;
 
+import android.os.Handler;
+
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
 
+import nikhanch.com.sfbandroidchatbubbles.Application;
 import nikhanch.com.sfbandroidchatbubbles.ApplicationService.BuddylistManager.MyContactsResponse;
+import nikhanch.com.sfbandroidchatbubbles.ApplicationService.LyncSignIn;
 import nikhanch.com.sfbandroidchatbubbles.ApplicationServiceUtils.UriUtils;
+import retrofit.Retrofit;
 
 /**
  * Created by nikhanch on 9/30/2015.
@@ -43,6 +48,21 @@ public class ContactModel {
         this.setSelfUcwaUrl(UriUtils.GetAbsoluteUrl(contactRecord.Links.self.href));
     }
 
+    public void getPhoto(final PhotoDownloadCallback callback){
+        if (this.photoUrl == null){
+            Handler h = new Handler();
+            h.post(new Runnable() {
+                @Override
+                public void run() {
+                    callback.OnPhotoDownloaded(null);
+                }
+            });
+        }
+        else{
+            Application.getServiceTalker().getSfbChatBubbleService().getBuddylistManager().GetPhoto(this.getPhotoUrl(), callback);
+        }
+
+    }
     public String getSipUri() {
         return sipUri;
     }

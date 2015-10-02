@@ -39,7 +39,7 @@ public class CommunicationManager implements ICommunicationManager{
 
     Retrofit mRetrofit = null;
     CommunicationService mCommunicationService = null;
-
+Map<String, Conversation> sipUriToConversation = new HashMap<>();
     public CommunicationManager(SfBChatBubblesService service){
         this.mApplicationService = service;
         this.mRetrofit = new Retrofit.Builder().baseUrl(LyncSignIn.LYNC_SERVER_API_URL).addConverterFactory(GsonConverterFactory.create()).build();
@@ -53,6 +53,10 @@ public class CommunicationManager implements ICommunicationManager{
     public void StartConversation(String recepientSipurl, String subject){
         MessagingInviteRequest req = new MessagingInviteRequest("Normal", subject, recepientSipurl, UUID.randomUUID().toString());
         this.startConversationWebMethods(req);
+    }
+
+    public Map<String, Conversation> getConversationMap(){
+        return this.sipUriToConversation;
     }
     //endregion
 
@@ -94,12 +98,13 @@ public class CommunicationManager implements ICommunicationManager{
     }
 
     public void OnConversationHistoryRetrieved(int code){
-        this.StartConversation("sip:dmitsh@microsoft.com", "Testing 123");
+        //this.StartConversation("sip:dmitsh@microsoft.com", "Testing 123");
     }
 
     public void OnConversationCreated(String location, MessagingInviteRequest request){
         Conversation c = new Conversation(this, request.to, location);
         c.GetConversationUrls();
+        this.sipUriToConversation.put(request.to, c);
         ConversationEvent ev = new ConversationEvent(request.to, c);
         Application.getServiceEventBus().post(ev);
     }

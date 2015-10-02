@@ -5,10 +5,12 @@ package nikhanch.com.sfbandroidchatbubbles.ApplicationService.CommunicationManag
  */
 public class MessageResponseEvent {
 
-    public MessageResponseEvent(String msg)
+    public MessageResponseEvent(String msg, String sipUrl)
     {
+        this.sipUrl = sipUrl;
         message = msg;
     }
 
-    public String message;
+    public final String sipUrl;
+    public final String message;
 }

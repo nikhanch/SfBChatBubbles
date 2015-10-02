@@ -1,13 +1,20 @@
 package nikhanch.com.sfbandroidchatbubbles.ApplicationService.BuddylistManager;
 
+import android.os.MemoryFile;
 import android.widget.Toast;
 
 import com.squareup.okhttp.Interceptor;
+import com.squareup.okhttp.ResponseBody;
 import com.squareup.otto.Subscribe;
 
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import nikhanch.com.sfbandroidchatbubbles.Application;
@@ -19,6 +26,10 @@ import nikhanch.com.sfbandroidchatbubbles.ApplicationService.WebTicket.GetTokenC
 import nikhanch.com.sfbandroidchatbubbles.ApplicationServiceUtils.RetrofitInterceptor;
 import nikhanch.com.sfbandroidchatbubbles.ApplicationServiceUtils.UriUtils;
 import nikhanch.com.sfbandroidchatbubbles.Models.ContactModel;
+import nikhanch.com.sfbandroidchatbubbles.Models.PhotoDownloadCallback;
+import okio.Buffer;
+import okio.BufferedSink;
+import okio.Okio;
 import retrofit.Call;
 import retrofit.Callback;
 import retrofit.GsonConverterFactory;
@@ -37,7 +48,7 @@ public class BuddylistManager implements IBuddylistManager{
     LyncContactManagementService mContactManagementService = null;
 
     Map<String, ContactModel> sipToContactModelMap = new HashMap<>();
-
+Map<String, List<PhotoDownloadCallback>> pendingPhotoDownloadCallbacks = new HashMap<>();
     public BuddylistManager(SfBChatBubblesService service){
         this.mApplicationService = service;
         this.mRetrofit = new Retrofit.Builder().baseUrl(LyncSignIn.LYNC_SERVER_API_URL).addConverterFactory(GsonConverterFactory.create()).build();
@@ -59,6 +70,22 @@ public class BuddylistManager implements IBuddylistManager{
         }
         return null;
     }
+
+    @Override
+    public void GetPhoto(URL url, PhotoDownloadCallback callback) {
+        if (this.pendingPhotoDownloadCallbacks.containsKey(url.toString())){
+            this.pendingPhotoDownloadCallbacks.get(url.toString()).add(callback);
+        }
+        else{
+            List<PhotoDownloadCallback> callbacks = new ArrayList<>();
+            callbacks.add(callback);
+            this.pendingPhotoDownloadCallbacks.put(url.toString(), callbacks);
+        }
+
+        getPhotoWebMethod(url);
+    }
+
+
     //endregion
 
     //region EventListeners
@@ -88,13 +115,67 @@ public class BuddylistManager implements IBuddylistManager{
         ContactsUpdatedEvent event = new ContactsUpdatedEvent(modelsUpdated);
         Application.getServiceEventBus().post(event);
     }
+
+    public void onPhotoDownloaded(File photo, URL photoUrl){
+        if (this.pendingPhotoDownloadCallbacks.containsKey(photoUrl.toString())){
+            List<PhotoDownloadCallback> callbacks = this.pendingPhotoDownloadCallbacks.get(photoUrl.toString());
+            for(PhotoDownloadCallback c : callbacks){
+                c.OnPhotoDownloaded(photo);
+            }
+        }
+        this.pendingPhotoDownloadCallbacks.remove(photoUrl.toString());
+    }
     //endregion
 
     //region WebService methods
+    private void getPhotoWebMethod(URL photoUrl){
+        try {
+            GetTokenRequestContext context = new GetTokenRequestContext(this, photoUrl);
+            mApplicationService.getCWTTokenProvider().GetToken(photoUrl, context, new CustomGetTokenCallback() {
+                @Override
+                public void OnTokenRetrieved(Object userContext, String token) {
+                    GetTokenRequestContext requestContext = (GetTokenRequestContext) userContext;
+                    Call<ResponseBody> call = mContactManagementService.GetPhoto(requestContext.urlToGet.toString(), token);
+                    Callback<ResponseBody> cb = new CustomRetrofitCallback<ResponseBody>(requestContext.buddylistManager, requestContext.urlToGet) {
+                        @Override
+                        public void onResponse(Response<ResponseBody> response, Retrofit retrofit) {
+                            int code = response.code();
+                            File photo = null;
+                            URL urlToget = (URL)this.context;
+                            if (response.isSuccess()){
+
+                                try {
+                                    File outputDir = SfBChatBubblesService.GetInstance.getCacheDir(); // context being the Activity pointer
+                                    boolean created = outputDir.mkdirs();
+                                    String fileName = urlToget.getPath().toString();
+                                    fileName = fileName.replace("/", "_");
+                                    fileName = fileName.replace("\\", "_");
+                                    photo = File.createTempFile(fileName, "jpg");
+                                    BufferedSink sink = Okio.buffer(Okio.sink(photo));
+                                    sink.writeAll(response.body().source());
+                                    sink.close();
+                                }
+                                catch (IOException e){
+                                    onOperationFailure("get photo bytes", e.getMessage());
+                                }
+                            }
+                            this.buddylistManager.onPhotoDownloaded(photo, urlToget);
+                        }
+                    };
+                    call.enqueue(cb);
+                }
+            });
+        } catch (Exception e){
+            onOperationFailure("Create Application Resource", e.getMessage());
+        }
+    }
+
+
+
     private void getMyContacts(){
 
         URL myContactsUrl = UriUtils.GetAbsoluteUrl(this.mApplicationsResource.Embedded.people.Links.myContacts.href);
-        mRetrofit.client().interceptors().add(new RetrofitInterceptor(true, true));
+        //mRetrofit.client().interceptors().add(new RetrofitInterceptor(true, true));
 
         try {
             GetTokenRequestContext context = new GetTokenRequestContext(this, myContactsUrl);
@@ -136,8 +217,15 @@ public class BuddylistManager implements IBuddylistManager{
     //region Helper classes
     abstract class CustomRetrofitCallback<T> implements Callback<T>{
         public final BuddylistManager buddylistManager;
+        public final Object context;
         CustomRetrofitCallback(BuddylistManager manager){
             this.buddylistManager = manager;
+            this.context = null;
+        }
+
+        CustomRetrofitCallback(BuddylistManager manager, Object context){
+            this.buddylistManager = manager;
+            this.context = context;
         }
 
         public void onFailure(Throwable t) {

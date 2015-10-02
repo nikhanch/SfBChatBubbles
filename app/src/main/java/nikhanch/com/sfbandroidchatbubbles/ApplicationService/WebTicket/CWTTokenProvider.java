@@ -160,6 +160,7 @@ public class CWTTokenProvider implements ICWTTokenProvider{
             }
         }
         this.mPendingTokenRequests.remove(tokenForHost);
+        token.initTime();
         this.mValidTokens.put(tokenForHost, token);
     }
 

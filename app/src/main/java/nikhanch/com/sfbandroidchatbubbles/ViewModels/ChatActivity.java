@@ -13,8 +13,14 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.ListView;
+import android.widget.Toast;
+
+import com.squareup.otto.Subscribe;
 
 import nikhanch.com.sfbandroidchatbubbles.Application;
+import nikhanch.com.sfbandroidchatbubbles.ApplicationService.ApplicationsResource;
+import nikhanch.com.sfbandroidchatbubbles.ApplicationService.CommunicationManager.ConversationEvent;
+import nikhanch.com.sfbandroidchatbubbles.ApplicationService.CommunicationManager.MessageResponseEvent;
 import nikhanch.com.sfbandroidchatbubbles.Models.ContactModel;
 import nikhanch.com.sfbandroidchatbubbles.R;
 
@@ -29,9 +35,10 @@ public class ChatActivity extends AppCompatActivity {
 
     private String mSipUri;
     private ContactModel mContactModel;
-
+private boolean signInComplete = false;
     private ChatMessageAdapter mAdapter;
 
+    private nikhanch.com.sfbandroidchatbubbles.ApplicationService.CommunicationManager.Conversation conversation = null;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -43,7 +50,6 @@ public class ChatActivity extends AppCompatActivity {
         mSipUri = i.getStringExtra("sipUri");
 
         mContactModel = Application.getServiceTalker().getSfbChatBubbleService().getBuddylistManager().GetContactModel(mSipUri);
-
         setTitle("Chat with " + mContactModel.getName());
 
         mListView = (ListView) findViewById(R.id.listView);
@@ -72,16 +78,48 @@ public class ChatActivity extends AppCompatActivity {
                 sendMessage();
             }
         });
-
+        if (Application.getServiceTalker().getSfbChatBubbleService().getLyncSignIn().getApplicationResource() != null){
+            this.signInComplete = true;
+        }
+        Application.getServiceTalker().getSfbChatBubbleService().getCommunicationManager().StartConversation(mContactModel.getSipUri(), "");
+        Application.getServiceEventBus().register(this);
         ActionBar actionBar = getSupportActionBar();
         actionBar.setDisplayHomeAsUpEnabled(true);
     }
 
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        Application.getServiceEventBus().unregister(this);
+    }
+
+    @Subscribe
+    public void OnConversationCreated(ConversationEvent ev){
+        if (ev != null && ev.recepientUrl == mContactModel.getSipUri()){
+            this.conversation = ev.conversation;
+            Toast.makeText(this, "Conversation created", Toast.LENGTH_SHORT).show();
+        }
+    }
+
+    @Subscribe
+    public void OnSignInComplete(ApplicationsResource resource){
+        if (resource != null){
+            this.signInComplete = true;
+        }
+    }
+
+    @Subscribe
+    public void onResponseMessage(MessageResponseEvent ev){
+        if (ev != null && ev.sipUrl == mContactModel.getSipUri()){
+            mimicOtherMessage(ev.message);
+        }
+    }
     private void sendMessage(String message) {
+        if (this.conversation != null){
+            conversation.SendMessageInConversation(message);
+        }
         ChatMessage chatMessage = new ChatMessage(message, true, false);
         mAdapter.add(chatMessage);
-
-        mimicOtherMessage(message);
     }
 
     private void mimicOtherMessage(String message) {
