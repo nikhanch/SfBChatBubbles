@@ -1,5 +1,6 @@
 package nikhanch.com.sfbandroidchatbubbles.ApplicationService.CommunicationManager;
 
+import android.os.Handler;
 import android.widget.Toast;
 
 import com.squareup.okhttp.MediaType;
@@ -10,6 +11,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 
+import nikhanch.com.sfbandroidchatbubbles.Application;
 import nikhanch.com.sfbandroidchatbubbles.ApplicationService.LyncSignIn;
 import nikhanch.com.sfbandroidchatbubbles.ApplicationService.SfBChatBubblesService;
 import nikhanch.com.sfbandroidchatbubbles.ApplicationService.WebTicket.GetTokenCallback;
@@ -35,7 +37,7 @@ public class Conversation {
     private Retrofit mRetrofit;
     GetMessagingInviteResponse messagingInviteResponse;
     GetConversationResponse conversationResponse;
-List<String> pendingMessages = new ArrayList();
+    List<String> pendingMessages = new ArrayList();
     private SfBChatBubblesService mApplicationService;
     private ConversationService mConversationService = null;
     Conversation(CommunicationManager manager, String recepient, String messagingInviteUrl){
@@ -50,7 +52,7 @@ List<String> pendingMessages = new ArrayList();
 
     public void SendMessageInConversation(String message){
         if (!this.mMessagingUrl.isEmpty()){
-           // sendMessageWebMethod(message);
+           sendMessageWebMethod(message);
         }
         else{
             pendingMessages.add(message);
@@ -202,6 +204,7 @@ List<String> pendingMessages = new ArrayList();
                             int code = response.code();
                             String headers = response.headers().toString();
                             Object response1 = response.body();
+                            this.manager.onMessageSent();
                         }
                     };
                     call.enqueue(cb);
@@ -210,6 +213,16 @@ List<String> pendingMessages = new ArrayList();
         } catch (Exception e){
             onOperationFailure("Create Application Resource", e.getMessage());
         }
+    }
+
+    public void onMessageSent(){
+        Handler h = new Handler();
+        h.postDelayed(new Runnable() {
+            @Override
+            public void run() {
+                Application.getServiceEventBus().post(new MessageResponseEvent(AutoReply.getText()));
+            }
+        }, 1000);
     }
 
     //region Helper Methods

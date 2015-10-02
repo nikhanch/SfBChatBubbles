@@ -6,7 +6,9 @@ import com.squareup.otto.Subscribe;
 
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
@@ -42,7 +44,7 @@ public class CommunicationManager implements ICommunicationManager{
         this.mApplicationService = service;
         this.mRetrofit = new Retrofit.Builder().baseUrl(LyncSignIn.LYNC_SERVER_API_URL).addConverterFactory(GsonConverterFactory.create()).build();
         this.mCommunicationService = mRetrofit.create(CommunicationService.class);
-        //this.mRetrofit.client().interceptors().add(new RetrofitInterceptor(true, true));
+        this.mRetrofit.client().interceptors().add(new RetrofitInterceptor(true, true));
         Application.getServiceEventBus().register(this);
     }
 
@@ -61,7 +63,9 @@ public class CommunicationManager implements ICommunicationManager{
             this.mApplicationsResource = resource;
             //getConversations();
             //getConversationHistory();
+            //SendPutRequestWebMethod();
             OnConversationHistoryRetrieved(400);
+
         }
     }
     //endregion
@@ -85,8 +89,12 @@ public class CommunicationManager implements ICommunicationManager{
         */
     }
 
+    public void OnPutRequestCompleted(){
+        getConversationHistory();
+    }
+
     public void OnConversationHistoryRetrieved(int code){
-        //this.StartConversation("sip:nikhanch@microsoft.com", "Testing 123");
+        this.StartConversation("sip:dmitsh@microsoft.com", "Testing 123");
     }
 
     public void OnConversationCreated(String location, MessagingInviteRequest request){
@@ -127,6 +135,50 @@ public class CommunicationManager implements ICommunicationManager{
             onOperationFailure("Create Application Resource", e.getMessage());
         }
     }
+
+    private void SendPutRequestWebMethod(){
+
+        URL urlToGet = UriUtils.GetAbsoluteUrl(this.mApplicationsResource.Embedded.communication.Links.self.href);
+
+            List<String> supportedMessageFormats = new ArrayList<>();
+            supportedMessageFormats.add("Plain");
+            List<String> supportedModalities = new ArrayList<>();
+            supportedModalities.add("Messaging");
+            PutCommuncationResourceRequest req = new PutCommuncationResourceRequest(
+                    "PhoneAudio",
+                    "Enabled",
+                    "Disabled",
+                    supportedMessageFormats,
+                    supportedModalities,
+                    "00:00:05",
+                    this.mApplicationsResource.Embedded.communication.bullShitId,
+                    this.mApplicationsResource.Embedded.communication.etag);
+        try {
+            GetTokenRequestContext context = new GetTokenRequestContext(this, urlToGet, req);
+            mApplicationService.getCWTTokenProvider().GetToken(urlToGet, context, new CustomGetTokenCallback() {
+                @Override
+                public void OnTokenRetrieved(Object userContext, String token) {
+                    GetTokenRequestContext requestContext = (GetTokenRequestContext) userContext;
+                    PutCommuncationResourceRequest req = (PutCommuncationResourceRequest)requestContext.context;
+                    Call<Object> call = mCommunicationService.PutCommunicationResource(requestContext.urlToGet.toString(), token, req);
+                    Callback<Object> cb = new CustomRetrofitCallback<Object>(requestContext.manager) {
+                        @Override
+                        public void onResponse(Response<Object> response, Retrofit retrofit) {
+                            int code = response.code();
+                            if (response.isSuccess()) {
+                                Object resource = response.body();
+                            }
+                            this.manager.OnPutRequestCompleted();
+                        }
+                    };
+                    call.enqueue(cb);
+                }
+            });
+        } catch (Exception e){
+            onOperationFailure("Create Application Resource", e.getMessage());
+        }
+    }
+
 
     private void startConversationWebMethods(MessagingInviteRequest req){
 
@@ -251,9 +303,17 @@ public class CommunicationManager implements ICommunicationManager{
     class GetTokenRequestContext {
         public final CommunicationManager manager;
         public final URL urlToGet;
+        public final Object context;
         public GetTokenRequestContext(CommunicationManager manager, URL url){
             this.manager = manager;
             this.urlToGet = url;
+            this.context = null;
+        }
+
+        public GetTokenRequestContext(CommunicationManager manager, URL url, Object context){
+            this.manager = manager;
+            this.urlToGet = url;
+            this.context = context;
         }
     }
 

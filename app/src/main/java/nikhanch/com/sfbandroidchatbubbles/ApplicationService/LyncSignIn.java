@@ -170,7 +170,7 @@ public class LyncSignIn {
     private void CreateApplicationResource() {
         try {
             GetTokenRequestContext context = new GetTokenRequestContext(this, this.mApplicationsResourceUrl.toString());
-
+            mRetrofit.client().interceptors().add(new RetrofitInterceptor(true, true));
             mApplicationService.getCWTTokenProvider().GetToken(this.mApplicationsResourceUrl, context, new CustomGetTokenCallback() {
                 @Override
                 public void OnTokenRetrieved(Object userContext, String token) {
@@ -201,7 +201,7 @@ public class LyncSignIn {
 
             URL urlToGet = UriUtils.GetAbsoluteUrl(partialUrlStr);
             GetTokenRequestContext context = new GetTokenRequestContext(this, urlToGet.toString());
-            mRetrofit.client().interceptors().add(new RetrofitInterceptor(true, true));
+
             mApplicationService.getCWTTokenProvider().GetToken(urlToGet, context, new CustomGetTokenCallback() {
                 @Override
                 public void OnTokenRetrieved(Object userContext, String token) {

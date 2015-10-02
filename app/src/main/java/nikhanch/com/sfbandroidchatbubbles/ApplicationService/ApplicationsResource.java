@@ -56,9 +56,9 @@ public class ApplicationsResource {
    
     public class Communication {
 
-        //TODO: Is this new everytime?
-       // @SerializedName("402cb046-1234-48ea-999e-162a2f53fa32")
-        //public String _402cb046123448ea999e162a2f53fa32;
+
+        @SerializedName("0fbfa8d4-2315-409d-b817-01a9bb69c1e7")
+        public String bullShitId;
         @SerializedName("supportedModalities")
         public List<Object> supportedModalities = new ArrayList<Object>();
         @SerializedName("supportedMessageFormats")
@@ -72,8 +72,8 @@ public class ApplicationsResource {
         @SerializedName("etag")
         public String etag;
 
-        public Communication(/*String _402cb046123448ea999e162a2f53fa32,*/ List<Object> supportedModalities, List<String> supportedMessageFormats, String conversationHistory, Links____ Links, String rel, String etag) {
-            //this._402cb046123448ea999e162a2f53fa32 = _402cb046123448ea999e162a2f53fa32;
+        public Communication(String bullShitId, List<Object> supportedModalities, List<String> supportedMessageFormats, String conversationHistory, Links____ Links, String rel, String etag) {
+            this.bullShitId = bullShitId;
             this.supportedModalities = supportedModalities;
             this.supportedMessageFormats = supportedMessageFormats;
             this.conversationHistory = conversationHistory;
