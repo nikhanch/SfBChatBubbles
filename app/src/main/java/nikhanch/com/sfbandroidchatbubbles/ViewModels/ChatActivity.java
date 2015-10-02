@@ -1,5 +1,8 @@
 package nikhanch.com.sfbandroidchatbubbles.ViewModels;
 
+import android.content.Intent;
+import android.support.v7.app.ActionBar;
+import android.support.v7.app.ActionBarActivity;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 import android.text.TextUtils;
@@ -11,6 +14,8 @@ import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.ListView;
 
+import nikhanch.com.sfbandroidchatbubbles.Application;
+import nikhanch.com.sfbandroidchatbubbles.Models.ContactModel;
 import nikhanch.com.sfbandroidchatbubbles.R;
 
 import java.util.ArrayList;
@@ -22,13 +27,24 @@ public class ChatActivity extends AppCompatActivity {
     private EditText mEditTextMessage;
     private ImageView mImageView;
 
+    private String mSipUri;
+    private ContactModel mContactModel;
 
     private ChatMessageAdapter mAdapter;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
         setContentView(R.layout.activity_chat);
+
+        // Get ContactModel passed via sipUri via Intent
+        Intent i = getIntent();
+        mSipUri = i.getStringExtra("sipUri");
+
+        mContactModel = Application.getServiceTalker().getSfbChatBubbleService().getBuddylistManager().GetContactModel(mSipUri);
+
+        setTitle("Chat with " + mContactModel.getName());
 
         mListView = (ListView) findViewById(R.id.listView);
         mButtonSend = (Button) findViewById(R.id.btn_send);
@@ -37,7 +53,6 @@ public class ChatActivity extends AppCompatActivity {
 
         mAdapter = new ChatMessageAdapter(this, new ArrayList<ChatMessage>());
         mListView.setAdapter(mAdapter);
-
 
         mButtonSend.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -58,7 +73,8 @@ public class ChatActivity extends AppCompatActivity {
             }
         });
 
-
+        ActionBar actionBar = getSupportActionBar();
+        actionBar.setDisplayHomeAsUpEnabled(true);
     }
 
     private void sendMessage(String message) {
@@ -102,6 +118,10 @@ public class ChatActivity extends AppCompatActivity {
 
         //noinspection SimplifiableIfStatement
         if (id == R.id.action_settings) {
+            return true;
+        }
+        else if (id == android.R.id.home) {
+            finish();
             return true;
         }
 

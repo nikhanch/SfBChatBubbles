@@ -94,6 +94,7 @@ public class BuddylistManager implements IBuddylistManager{
     private void getMyContacts(){
 
         URL myContactsUrl = UriUtils.GetAbsoluteUrl(this.mApplicationsResource.Embedded.people.Links.myContacts.href);
+        mRetrofit.client().interceptors().add(new RetrofitInterceptor(true, true));
 
         try {
             GetTokenRequestContext context = new GetTokenRequestContext(this, myContactsUrl);
@@ -106,9 +107,7 @@ public class BuddylistManager implements IBuddylistManager{
                         @Override
                         public void onResponse(Response<MyContactsResponse> response, Retrofit retrofit) {
                             int code = response.code();
-                            if (response.isSuccess()) {
-                                Object resource = response.body();
-                            }
+                            this.buddylistManager.onMyContactsFound(response.body());
                         }
                     };
                     call.enqueue(cb);

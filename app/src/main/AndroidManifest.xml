@@ -21,6 +21,15 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+        <activity
+            android:name=".ViewModels.BuddyActivity"
+            android:label="Contact List">
+
+        </activity>
+        <activity
+            android:name=".ViewModels.ChatActivity"
+            android:label="Chat">
+        </activity>
         <service
             android:name=".ApplicationService.SfBChatBubblesService"
             android:enabled="true"

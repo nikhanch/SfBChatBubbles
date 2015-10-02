@@ -118,7 +118,7 @@ public class CWTTokenProvider implements ICWTTokenProvider{
                                 break;
                             }
                         }
-                        Toast.makeText(mContext, webTicketEndpointUrl, Toast.LENGTH_LONG).show();
+                       // Toast.makeText(mContext, webTicketEndpointUrl, Toast.LENGTH_LONG).show();
                         try{
                             URL webTicketUrl = new URL(webTicketEndpointUrl);
                             this.component.OnWebTicketEndpointUrlFound(webTicketUrl, this.tokenForHost);
@@ -167,7 +167,7 @@ public class CWTTokenProvider implements ICWTTokenProvider{
 
         try{
 
-            Call<OAuthToken> call = mWebTicketService.GetOAuthToken(url.toString(), "password", "lmtest4@microsoft.com", "Pass@sept2015");
+            Call<OAuthToken> call = mWebTicketService.GetOAuthToken(url.toString(), "password", "lmtest3@microsoft.com", "Pass@sept2015");
             Callback<OAuthToken> cb = new CustomCallBack<OAuthToken>(this, tokenForHost) {
                 @Override
                 public void onResponse(Response<OAuthToken> response, Retrofit retrofit){
@@ -178,7 +178,7 @@ public class CWTTokenProvider implements ICWTTokenProvider{
                         token = responseToken.accessToken;
                     }
 
-                    Toast.makeText(mContext, token, Toast.LENGTH_LONG).show();
+                    //Toast.makeText(mContext, token, Toast.LENGTH_LONG).show();
                     this.component.OnTokenRetrievedFromService(responseToken, this.tokenForHost);
                 }
                 @Override

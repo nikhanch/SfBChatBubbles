@@ -1,13 +1,13 @@
 package nikhanch.com.sfbandroidchatbubbles.ViewModels;
 
 import android.content.Context;
+import android.content.Intent;
 import android.graphics.PixelFormat;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.view.Menu;
 import android.view.MenuItem;
-import com.crashlytics.android.Crashlytics;
-import io.fabric.sdk.android.Fabric;
+
 import nikhanch.com.sfbandroidchatbubbles.R;
 
 import android.view.View;
@@ -33,9 +33,17 @@ import com.txusballesteros.bubbles.OnInitializedCallback;
         setContentView(R.layout.activity_login);
 
         final Button button = (Button) findViewById(R.id.button);
-        button.setOnClickListener(new View.OnClickListener(){
+        button.setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) {
                 addNewView();
+            }
+        });
+
+        final Button navButton = (Button) findViewById(R.id.chatButton);
+        navButton.setOnClickListener(new View.OnClickListener(){
+            public void onClick(View v) {
+                Intent listView = new Intent(getApplicationContext(), BuddyActivity.class);
+                startActivity(listView);
             }
         });
 

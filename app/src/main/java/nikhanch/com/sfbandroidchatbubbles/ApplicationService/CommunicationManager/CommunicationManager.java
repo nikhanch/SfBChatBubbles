@@ -86,7 +86,7 @@ public class CommunicationManager implements ICommunicationManager{
     }
 
     public void OnConversationHistoryRetrieved(int code){
-        this.StartConversation("sip:nikhanch@microsoft.com", "Testing 123");
+        //this.StartConversation("sip:nikhanch@microsoft.com", "Testing 123");
     }
 
     public void OnConversationCreated(String location, MessagingInviteRequest request){
