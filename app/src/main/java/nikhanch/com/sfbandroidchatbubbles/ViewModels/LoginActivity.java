@@ -41,15 +41,42 @@ import com.txusballesteros.bubbles.OnInitializedCallback;
         });
 
         final Button navButton = (Button) findViewById(R.id.chatButton);
-        navButton.setOnClickListener(new View.OnClickListener(){
+        navButton.setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) {
                 Intent listView = new Intent(getApplicationContext(), BuddyActivity.class);
                 startActivity(listView);
             }
         });
+
+        final Button navButton2 = (Button) findViewById(R.id.meetingsButton);
+        navButton2.setOnClickListener(new View.OnClickListener(){
+            public void onClick(View v) {
+                Intent intent = new Intent(getApplicationContext(), MeetingActivity.class);
+                startActivity(intent);
+            }
+        });
+
+        initializeBubblesManager();
     }
 
 
+    private void addNewBubble() {
+        BubbleLayout bubbleView = (BubbleLayout)LayoutInflater.from(LoginActivity.this).inflate(R.layout.bubble_layout, null);
+        bubbleView.setOnBubbleRemoveListener(new BubbleLayout.OnBubbleRemoveListener() {
+            @Override
+            public void onBubbleRemoved(BubbleLayout bubble) { }
+        });
+        bubbleView.setOnBubbleClickListener(new BubbleLayout.OnBubbleClickListener() {
+
+            @Override
+            public void onBubbleClick(BubbleLayout bubble) {
+                Toast.makeText(getApplicationContext(), "Clicked !",
+                        Toast.LENGTH_SHORT).show();
+            }
+        });
+
+        initializeBubblesManager();
+    }
 
     public void addNewView()
     {
@@ -68,6 +95,19 @@ import com.txusballesteros.bubbles.OnInitializedCallback;
         ViewGroup mTopView = (ViewGroup) LayoutInflater.from(LoginActivity.this).inflate(R.layout.activity_chat, null);
 
         wm.addView(mTopView, params);
+    }
+
+    private void initializeBubblesManager() {
+        bubblesManager = new BubblesManager.Builder(this)
+                //.setTrashLayout(R.layout.bubble_trash_layout)
+                .setInitializationCallback(new OnInitializedCallback() {
+                    @Override
+                    public void onInitialized() {
+                        // addNewBubble();
+                    }
+                })
+                .build();
+        bubblesManager.initialize();
     }
 
     @Override

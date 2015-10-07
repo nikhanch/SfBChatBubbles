@@ -1,5 +1,6 @@
 package nikhanch.com.sfbandroidchatbubbles.ApplicationService.MeetingsManager;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -10,7 +11,7 @@ public class MyMeetingsEvent {
 
     private int mCapacity;
 
-    private List<MyOnlineMeetingsResponse> mMeetings;
+    private List<MyOnlineMeetingsResponse> mMeetings = new ArrayList<MyOnlineMeetingsResponse>();
 
     public MyMeetingsEvent(int capacity) {
         mCapacity = capacity;

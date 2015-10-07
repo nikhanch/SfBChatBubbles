@@ -5,8 +5,10 @@ import android.widget.Toast;
 import com.squareup.otto.Subscribe;
 
 import java.net.URL;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 
 import nikhanch.com.sfbandroidchatbubbles.Application;
 import nikhanch.com.sfbandroidchatbubbles.ApplicationService.ApplicationsResource;
@@ -15,6 +17,7 @@ import nikhanch.com.sfbandroidchatbubbles.ApplicationService.SfBChatBubblesServi
 import nikhanch.com.sfbandroidchatbubbles.ApplicationService.WebTicket.GetTokenCallback;
 import nikhanch.com.sfbandroidchatbubbles.ApplicationServiceUtils.RetrofitInterceptor;
 import nikhanch.com.sfbandroidchatbubbles.ApplicationServiceUtils.UriUtils;
+import nikhanch.com.sfbandroidchatbubbles.Models.ContactModel;
 import retrofit.Call;
 import retrofit.Callback;
 import retrofit.GsonConverterFactory;
@@ -32,7 +35,7 @@ public class MeetingsManager {
     Retrofit mRetrofit = null;
     MeetingsManagementService mMeetingsManagementService = null;
 
-    MyMeetingsEvent mMeetingsEvent = null;
+    public MyMeetingsEvent mMeetingsEvent = null;
 
     public MeetingsManager(SfBChatBubblesService service){
         this.mApplicationService = service;
@@ -42,11 +45,11 @@ public class MeetingsManager {
     }
 
     @Subscribe
-    public void OnApplicationResourceUpdated(ApplicationsResource resource){
-        if (resource != null && updateNeeded()) {
-            this.mApplicationsResource = resource;
-            getMyMeetings();
-        }
+        public void OnApplicationResourceUpdated(ApplicationsResource resource){
+            if (resource != null && updateNeeded()) {
+                this.mApplicationsResource = resource;
+                getMyMeetings();
+            }
     }
 
     private boolean updateNeeded(){
